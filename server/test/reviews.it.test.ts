@@ -228,6 +228,8 @@ d('A2 reviews + agents (Testcontainers pg)', () => {
     const list = (await app.inject({ method: 'GET', url: `/repos/${repo!.id}/pulls` })).json();
     const seeded = list.find((p: { number: number }) => p.number === 482);
     expect(seeded.cost_usd).toBeCloseTo(0.014);
+    // Latest review's findings grouped by severity (seed: 1 CRITICAL + 1 WARNING).
+    expect(seeded.severity_counts).toEqual({ CRITICAL: 1, WARNING: 1, SUGGESTION: 0 });
 
     const runs = (await app.inject({ method: 'GET', url: `/pulls/${seeded.id}/runs` })).json();
     expect(runs[0]).toMatchObject({ status: 'done', tokens_in: 8200, tokens_out: 1300 });

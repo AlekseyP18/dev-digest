@@ -7,6 +7,13 @@ import { useTranslations } from "next-intl";
 import { Icon, Avatar, Badge, CircularScore } from "@devdigest/ui";
 import type { PrMeta } from "@/lib/types";
 import { RunCostBadge } from "@/components/run-cost-badge";
+import {
+  FindingsPopover,
+  SeverityCounts,
+  latestReviewsPerAgent,
+  totalFindings,
+} from "@/components/finding-severity";
+import { usePrReviews } from "@/lib/hooks/reviews";
 import { SIZE_COLOR, STATUS_META } from "../../constants";
 import { relativeTime, sizeOf } from "../../helpers";
 import { s } from "../../styles";
@@ -18,6 +25,14 @@ export function PRRow({ pr, repoId }: { pr: PrMeta; repoId: string }) {
   const st = STATUS_META[pr.status] ?? STATUS_META.needs_review!;
   const { size, lines } = sizeOf(pr);
   const reviewed = pr.score != null; // null score ⇒ PR has never been reviewed
+  // Finding previews load lazily — only once the FINDINGS popover is opened.
+  const [previewOpened, setPreviewOpened] = React.useState(false);
+  const reviews = usePrReviews(previewOpened ? pr.id : null);
+  const findingsTotal = totalFindings(pr.severity_counts);
+  // Same scope as severity_counts: the latest review of each agent.
+  const previewFindings = reviews.data
+    ? latestReviewsPerAgent(reviews.data).flatMap((r) => r.findings)
+    : undefined;
   return (
     <div
       onMouseEnter={() => setH(true)}
@@ -50,6 +65,21 @@ export function PRRow({ pr, repoId }: { pr: PrMeta; repoId: string }) {
       <div style={s.scoreCell}>
         {reviewed ? (
           <CircularScore score={pr.score!} size={34} stroke={3} />
+        ) : (
+          <span style={s.muted}>—</span>
+        )}
+      </div>
+      <div>
+        {findingsTotal > 0 ? (
+          <FindingsPopover
+            variant="list"
+            count={previewFindings?.length ?? findingsTotal}
+            findings={previewFindings}
+            isLoading={reviews.isLoading}
+            onOpen={() => setPreviewOpened(true)}
+          >
+            <SeverityCounts counts={pr.severity_counts} />
+          </FindingsPopover>
         ) : (
           <span style={s.muted}>—</span>
         )}

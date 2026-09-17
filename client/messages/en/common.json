@@ -22,5 +22,11 @@
     "title": "Run cost (USD)",
     "tokens": "{count} tok",
     "unknown": "Cost unknown"
+  },
+  "findingsPopover": {
+    "run": "{count, plural, one {# finding} other {# findings}}",
+    "list": "{count, plural, one {# finding} other {# findings}} in this run",
+    "loading": "Loading findings…",
+    "empty": "No findings in this run"
   }
 }
