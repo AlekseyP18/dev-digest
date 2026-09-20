@@ -33,7 +33,7 @@ File missing → create it from [INSIGHTS.template.md](INSIGHTS.template.md).
 | Codebase Patterns | Unwritten conventions and architecture decisions *with their reason* |
 | Tool & Library Notes | Quirks of a dependency/tool at the version in the lockfile |
 | Recurring Errors & Fixes | Exact error text → root cause → fix |
-| Session Notes | One dated line per wrap-up: what was done, which entries were added |
+| Session Notes | One dated line per wrap-up: what was done, which entries were added, `path:line` of the main change/spec |
 | Open Questions | Something unresolved the next session should check |
 
 ## 4. Write the entry
@@ -43,6 +43,10 @@ Append as the last bullet of the section — never edit, reorder, or delete exis
 ```
 - **YYYY-MM-DD** · <what is true, specific names/numbers> → <what to do instead> · `path/to/file.ts:42`
 ```
+
+Format is fixed and checked — **every** bullet (Session Notes and Open Questions included) has:
+- the date as `**YYYY-MM-DD**`, first;
+- a trailing `` `path:line` `` from the repo root (e.g. `` `client/src/lib/format-cost.ts:8` ``) pointing at the exact place the lesson is about. For a JSON/spec file, use the line of the key step or the `1` of the spec. No line number → find it (`grep -n`) before writing; never write a bare path.
 
 Actionable cold: a reader with zero context knows exactly what to do.
 

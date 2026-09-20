@@ -1,10 +1,14 @@
 # e2e — browser flows
 
+Before changing this package read `docs/README.md`.
+Feature contracts: not here — `specs/` holds executable flows; see `client/specs/` and `server/specs/`.
+
 agent-browser (Rust + CDP) · tsx · package manager: npm. No Playwright, no LLM, no API keys.
 
 ## Commands
 - `npm test` — runs flows against a running stack (`E2E_BASE_URL`, default http://localhost:3000)
 - `npm run e2e:hermetic` — full hermetic run via `../scripts/e2e.sh`
+- `npm run lint` · `npm run typecheck` — static checks, no browser needed
 
 ## Map
 - `specs/NN-name.flow.json` — executable flows (JSON list of agent-browser commands), NOT docs

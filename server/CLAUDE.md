@@ -1,9 +1,12 @@
 # server — @devdigest/api
 
+Before changing this package read `docs/README.md`.
+Feature contracts: `specs/` (one file per feature).
+
 Fastify 5 · Drizzle ORM 0.38 · postgres.js · pgvector (pg16) · Zod 3 + fastify-type-provider-zod · vitest 2
 
 ## Commands (pnpm)
-- `pnpm dev` (:3001) · `pnpm typecheck` · `pnpm db:migrate` · `pnpm db:seed` · `pnpm db:generate`
+- `pnpm dev` (:3001) · `pnpm lint` (ESLint 9 flat, `eslint.config.mjs`) · `pnpm typecheck` · `pnpm db:migrate` · `pnpm db:seed` · `pnpm db:generate`
 - Unit (no Docker): `pnpm exec vitest run --exclude '**/*.it.test.ts'`
 - Integration (Docker, testcontainers): `pnpm exec vitest run .it.test`
 

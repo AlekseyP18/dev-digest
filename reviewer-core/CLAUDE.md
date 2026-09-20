@@ -1,9 +1,12 @@
 # reviewer-core — review engine
 
+Before changing this package read `docs/README.md`.
+Feature contracts: `specs/` (one file per feature).
+
 TypeScript 5.7 · Zod 3 · openai 4 (OpenRouter client) · vitest 2 · package manager: npm
 
 ## Commands
-- `npm test` · `npm run typecheck` (= build; the package never emits JS — server consumes the source)
+- `npm test` · `npm run lint` (ESLint 9 flat) · `npm run typecheck` (= build; the package never emits JS — server consumes the source)
 
 ## Map
 - `src/prompt.ts` assemblePrompt, wrapUntrusted, INJECTION_GUARD

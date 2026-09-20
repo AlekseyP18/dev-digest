@@ -1,9 +1,12 @@
 # client — @devdigest/web
 
+Before changing this package read `docs/README.md`.
+Feature contracts: `specs/` (one file per feature).
+
 Next.js 15 (App Router) · React 19 · TanStack Query 5 · next-intl 3 · Tailwind 4 · vitest 2 + jsdom
 
 ## Commands (pnpm)
-- `pnpm dev` (:3000) · `pnpm typecheck` · `pnpm test` (fetch mocked — no API needed)
+- `pnpm dev` (:3000) · `pnpm lint` (ESLint 9 flat, `eslint.config.mjs`) · `pnpm typecheck` · `pnpm test` (fetch mocked — no API needed)
 
 ## Map
 - `src/app/**/page.tsx` thin pages · feature logic in colocated `_components/<Name>/` (+ `*.test.tsx`)
