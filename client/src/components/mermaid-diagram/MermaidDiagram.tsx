@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { s } from "./styles";
 
 let seq = 0;
 
@@ -18,19 +19,21 @@ function looksLikeMermaid(src: string): boolean {
  * (client-only). We VALIDATE with mermaid.parse({suppressErrors}) before
  * rendering — mermaid otherwise injects a "Syntax error" bomb graphic into the
  * DOM on bad input instead of throwing. Junk/unparseable input renders nothing.
+ * Starter scaffolding: no screen uses it yet; lessons (brief / onboarding
+ * diagrams) mount it.
  */
 export function MermaidDiagram({ chart }: { chart: string }) {
   const ref = React.useRef<HTMLDivElement>(null);
-  const [state, setState] = React.useState<"pending" | "ok" | "invalid">("pending");
+  const src = (chart ?? "").trim();
+  const isCandidate = looksLikeMermaid(src);
+  // Result of the async render, tagged with the source it belongs to; a new
+  // `chart` is "pending" (or "invalid" if it's clearly not mermaid) until then.
+  const [result, setResult] = React.useState<{ src: string; status: "ok" | "invalid" } | null>(null);
+  const status = !isCandidate ? "invalid" : result?.src === src ? result.status : "pending";
 
   React.useEffect(() => {
+    if (!isCandidate) return;
     let cancelled = false;
-    const src = (chart ?? "").trim();
-    if (!looksLikeMermaid(src)) {
-      setState("invalid");
-      return;
-    }
-    setState("pending");
     (async () => {
       try {
         const mermaid = (await import("mermaid")).default;
@@ -39,39 +42,26 @@ export function MermaidDiagram({ chart }: { chart: string }) {
         const valid = await mermaid.parse(src, { suppressErrors: true });
         if (cancelled) return;
         if (!valid) {
-          setState("invalid");
+          setResult({ src, status: "invalid" });
           return;
         }
         const { svg } = await mermaid.render(`dd-mermaid-${seq++}`, src);
         if (cancelled) return;
         if (ref.current) ref.current.innerHTML = svg;
-        setState("ok");
+        setResult({ src, status: "ok" });
       } catch {
-        if (!cancelled) setState("invalid");
+        if (!cancelled) setResult({ src, status: "invalid" });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [chart]);
+  }, [src, isCandidate]);
 
   // Not a (valid) diagram → render nothing rather than a broken box.
-  if (state === "invalid") return null;
+  if (status === "invalid") return null;
 
-  return (
-    <div
-      ref={ref}
-      style={{
-        display: state === "ok" ? "flex" : "none",
-        justifyContent: "center",
-        background: "var(--bg-elevated)",
-        border: "1px solid var(--border)",
-        borderRadius: 8,
-        padding: 12,
-        overflowX: "auto",
-      }}
-    />
-  );
+  return <div ref={ref} style={s.box(status === "ok")} />;
 }
 
 export default MermaidDiagram;

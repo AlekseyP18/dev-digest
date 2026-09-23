@@ -20,3 +20,6 @@ export const PROMPT_COLORS = {
   callers: "var(--warn)",
   user: "var(--ok)",
 } as const;
+
+/** How long the "copied" check mark stays after copying a prompt (ms). */
+export const COPIED_FEEDBACK_MS = 1200;

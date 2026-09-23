@@ -1,12 +1,11 @@
 import type { FindingRecord, Severity } from "@devdigest/shared";
-import { LOW_CONFIDENCE_THRESHOLD, SEVERITY_ORDER } from "./constants";
+import { sortBySeverity } from "@/lib/severity";
+import { LOW_CONFIDENCE_THRESHOLD } from "./constants";
 
 /** Optionally drop low-confidence findings, sorted by severity. */
 export function confidentFindings(findings: FindingRecord[], hideLow: boolean): FindingRecord[] {
   const shown = hideLow ? findings.filter((f) => f.confidence >= LOW_CONFIDENCE_THRESHOLD) : findings;
-  return [...shown].sort(
-    (a, b) => (SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9),
-  );
+  return sortBySeverity(shown);
 }
 
 /** Optionally drop low-confidence findings, keep one severity, sort by severity. */

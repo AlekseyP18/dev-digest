@@ -1,8 +1,10 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "../../../../../../../../messages/en/prReview.json";
 import { SeverityFilterPills } from "./SeverityFilterPills";
+import { namespace } from "@/test/intl";
+
+const messages = namespace("prReview");
 
 afterEach(cleanup);
 

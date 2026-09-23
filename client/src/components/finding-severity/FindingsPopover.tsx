@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 import { Icon } from "@devdigest/ui";
 import type { FindingRecord } from "@devdigest/shared";
 import { FindingPreview } from "./FindingPreview";
-import { SEVERITY_KEYS } from "./helpers";
+import { sortBySeverity } from "@/lib/severity";
 import {
   POPOVER_CLOSE_DELAY_MS,
   POPOVER_GAP,
@@ -97,16 +97,7 @@ export function FindingsPopover({
   }, [open]);
   React.useEffect(() => cancelClose, []);
 
-  const sorted = React.useMemo(
-    () =>
-      findings
-        ? [...findings].sort(
-            (a, b) =>
-              SEVERITY_KEYS.indexOf(a.severity) - SEVERITY_KEYS.indexOf(b.severity),
-          )
-        : undefined,
-    [findings],
-  );
+  const sorted = React.useMemo(() => (findings ? sortBySeverity(findings) : undefined), [findings]);
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   return (

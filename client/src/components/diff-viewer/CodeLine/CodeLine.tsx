@@ -3,6 +3,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { commentTargetFor, type CommentThread, type DiffCommentApi, cs } from "../comments";
 import { type Line } from "../helpers";
 import { s, lineRowFor, lineSignFor } from "../styles";
@@ -20,6 +21,7 @@ export function CodeLine({
   threads: CommentThread[];
   commenting?: DiffCommentApi;
 }) {
+  const t = useTranslations("shell.diffViewer");
   const [hover, setHover] = React.useState(false);
   const [composing, setComposing] = React.useState(false);
 
@@ -42,12 +44,12 @@ export function CodeLine({
       onMouseLeave={() => setHover(false)}
     >
       <div style={lineRowFor(ln.kind)}>
-        <span className="mono tnum" style={{ ...s.lineNo, position: "relative" }}>
+        <span className="mono tnum" style={s.lineNo}>
           {showAdd && target && (
             <button
               type="button"
-              title="Add a comment on this line"
-              aria-label="Add a comment on this line"
+              title={t("addComment")}
+              aria-label={t("addComment")}
               onClick={() => setComposing(true)}
               style={cs.addBtn}
             >

@@ -10,8 +10,14 @@
     "dark": "dark",
     "light": "light"
   },
+  "repoSync": {
+    "synced": "synced",
+    "notSynced": "not synced"
+  },
   "removeRepo": {
-    "confirm": "Remove {name} from DevDigest?\n\nThis only removes it from DevDigest (and its imported PRs). Nothing is deleted on GitHub, and your local clone on disk is left untouched.",
+    "confirm": "Remove {name} from DevDigest?",
+    "confirmBody": "This only removes it from DevDigest (and its imported PRs). Nothing is deleted on GitHub, and your local clone on disk is left untouched.",
+    "confirmAction": "Remove",
     "fallbackName": "this repository"
   },
   "nav": {
@@ -27,9 +33,6 @@
     "agent-performance": "Agent Performance",
     "ci-runs": "CI Runs"
   },
-  "featurePlaceholder": {
-    "defaultBody": "This screen is owned by {owner}. The app shell, routing, theming and data layer are wired — {owner} fills in the screen here."
-  },
   "diffViewer": {
     "noDiffText": "No diff text available (binary or unfetched patch).",
     "noChangedFiles": "No changed files.",
@@ -40,6 +43,7 @@
     "reply": "Reply",
     "viewOnGitHub": "View on GitHub",
     "postedToGitHub": "Posts to GitHub immediately",
-    "outdatedTitle": "{count} comment(s) on older revisions"
+    "outdatedTitle": "{count} comment(s) on older revisions",
+    "addComment": "Add a comment on this line"
   }
 }

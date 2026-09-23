@@ -5,7 +5,14 @@ export const s = {
   wrap: { maxWidth: 640 } satisfies CSSProperties,
   keyRow: { display: "flex", gap: 10, alignItems: "center" } satisfies CSSProperties,
   keyInput: { flex: 1 } satisfies CSSProperties,
-  revealIcon: { color: "var(--text-muted)", cursor: "pointer" } satisfies CSSProperties,
+  revealBtn: {
+    display: "inline-flex",
+    background: "none",
+    border: "none",
+    padding: 0,
+    color: "var(--text-muted)",
+    cursor: "pointer",
+  } satisfies CSSProperties,
   result: (ok: boolean): CSSProperties => ({
     display: "inline-flex",
     alignItems: "center",

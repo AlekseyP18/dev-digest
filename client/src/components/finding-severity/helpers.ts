@@ -1,31 +1,14 @@
-import type { FindingRecord, ReviewRecord, Severity, SeverityCounts } from "@devdigest/shared";
+import type { ReviewRecord, Severity } from "@devdigest/shared";
 
-/** Severities in display order (most severe first). */
-export const SEVERITY_KEYS: Severity[] = ["CRITICAL", "WARNING", "SUGGESTION"];
-
-/** Severity → CSS colour token. */
-export const SEV_COLOR: Record<string, string> = {
+/** Severity → CSS colour token. Order, counts and blockers live in `@/lib/severity`. */
+export const SEV_COLOR: Record<Severity, string> = {
   CRITICAL: "var(--crit)",
   WARNING: "var(--warn)",
   SUGGESTION: "var(--sugg)",
-  INFO: "var(--info)",
 };
 
 /** Fallback colour for an unknown severity. */
 export const SEV_COLOR_FALLBACK = "var(--text-muted)";
-
-/** Group findings by severity — a plain count, never a model call. */
-export function countBySeverity(findings: Pick<FindingRecord, "severity">[]): SeverityCounts {
-  const counts: SeverityCounts = { CRITICAL: 0, WARNING: 0, SUGGESTION: 0 };
-  for (const f of findings) {
-    if (f.severity in counts) counts[f.severity as Severity] += 1;
-  }
-  return counts;
-}
-
-export function totalFindings(counts: SeverityCounts | null | undefined): number {
-  return counts ? counts.CRITICAL + counts.WARNING + counts.SUGGESTION : 0;
-}
 
 /**
  * Newest `kind: "review"` record of EACH agent — what the PR list's FINDINGS

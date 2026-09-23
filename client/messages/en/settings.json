@@ -2,6 +2,10 @@
   "breadcrumb": "Settings",
   "title": "Settings",
   "fallbackBody": "Standard configuration forms for {label} live here (A6 finalizes the full Settings surface).",
+  "sections": {
+    "api-keys": "API Keys",
+    "models": "Feature Models"
+  },
   "apiKeys": {
     "title": "API Keys",
     "body": "Bring your own keys. Stored locally through SecretsProvider (.env in MVP) — never uploaded.",
@@ -18,11 +22,20 @@
     "testing": "Testing…",
     "testFailed": "Test failed",
     "configured": "Configured",
-    "notSet": "Not set"
+    "notSet": "Not set",
+    "showKey": "Show key",
+    "hideKey": "Hide key"
   },
   "models": {
     "title": "Feature Models",
     "body": "Choose the model each system feature uses. The list and live prices come from OpenRouter; a feature falls back to its default until you pick one.",
+    "features": {
+      "onboarding": { "label": "Onboarding Tour", "description": "Writes the per-repo onboarding tour." },
+      "review_intent": { "label": "PR Review · Intent", "description": "Derives a PR’s intent and scope before review." },
+      "risk_brief": { "label": "Risk Brief", "description": "Assesses merge risks for a pull request." },
+      "conformance": { "label": "Conformance", "description": "Checks a PR against the project spec." },
+      "conventions": { "label": "Conventions", "description": "Extracts coding conventions from the repo." }
+    },
     "usingDefault": "default",
     "search": "Search models…",
     "liveNote": "Prices are pulled live from OpenRouter — USD per 1M input/output tokens.",

@@ -4,6 +4,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 
 type ToastKind = "success" | "error" | "info";
 interface Toast {
@@ -44,7 +45,43 @@ const COLORS: Record<ToastKind, { bg: string; border: string; icon: string }> = 
   info: { bg: "var(--bg-elevated)", border: "var(--border-strong)", icon: "ℹ" },
 };
 
+const s = {
+  stack: {
+    position: "fixed",
+    bottom: 20,
+    right: 20,
+    zIndex: 1000,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    maxWidth: 380,
+  } satisfies React.CSSProperties,
+  toast: (c: { bg: string; border: string }): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "12px 16px",
+    borderRadius: 9,
+    background: c.bg,
+    border: `1px solid ${c.border}`,
+    color: "var(--text-primary)",
+    fontSize: 14,
+    boxShadow: "0 6px 24px rgba(0,0,0,0.3)",
+    animation: "ddToastIn .16s ease-out",
+  }),
+  icon: (color: string): React.CSSProperties => ({ color, fontWeight: 700 }),
+  message: { flex: 1 } satisfies React.CSSProperties,
+  close: {
+    background: "none",
+    border: "none",
+    color: "var(--text-muted)",
+    cursor: "pointer",
+    fontSize: 16,
+  } satisfies React.CSSProperties,
+};
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const tActions = useTranslations("common.actions");
   const [items, setItems] = React.useState<Toast[]>([]);
   const seq = React.useRef(1);
 
@@ -76,45 +113,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastCtx.Provider value={api}>
       {children}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 20,
-          right: 20,
-          zIndex: 1000,
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-          maxWidth: 380,
-        }}
-        role="status"
+      <div style={s.stack} role="status"
         aria-live="polite"
       >
         {items.map((t) => {
           const c = COLORS[t.kind];
           return (
-            <div
-              key={t.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 16px",
-                borderRadius: 9,
-                background: c.bg,
-                border: `1px solid ${c.border}`,
-                color: "var(--text-primary)",
-                fontSize: 14,
-                boxShadow: "0 6px 24px rgba(0,0,0,0.3)",
-                animation: "ddToastIn .16s ease-out",
-              }}
-            >
-              <span style={{ color: c.border, fontWeight: 700 }}>{c.icon}</span>
-              <span style={{ flex: 1 }}>{t.message}</span>
+            <div key={t.id} style={s.toast(c)}>
+              <span style={s.icon(c.border)}>{c.icon}</span>
+              <span style={s.message}>{t.message}</span>
               <button
+                type="button"
                 onClick={() => setItems((prev) => prev.filter((x) => x.id !== t.id))}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16 }}
-                aria-label="Dismiss"
+                style={s.close}
+                aria-label={tActions("close")}
               >
                 ×
               </button>

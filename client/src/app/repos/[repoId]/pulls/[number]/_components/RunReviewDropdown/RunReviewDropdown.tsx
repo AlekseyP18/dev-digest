@@ -7,8 +7,8 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, Dropdown, type DropdownItemDef } from "@devdigest/ui";
-import { useAgents } from "../../../../../../../lib/hooks/agents";
-import { useRunReview } from "../../../../../../../lib/hooks/reviews";
+import { useAgents } from "@/lib/hooks/agents";
+import { useRunReview } from "@/lib/hooks/reviews";
 import { DROPDOWN_WIDTH } from "./constants";
 
 export function RunReviewDropdown({
@@ -17,8 +17,6 @@ export function RunReviewDropdown({
   kind = "primary",
   warnMerged = false,
   onRunStart,
-  onRunsStarted,
-  onRunSettled,
 }: {
   prId: string;
   size?: "sm" | "md" | "lg";
@@ -27,9 +25,6 @@ export function RunReviewDropdown({
   warnMerged?: boolean;
   /** Fired the moment a run is kicked off (before it completes). */
   onRunStart?: () => void;
-  onRunsStarted?: (runIds: string[]) => void;
-  /** Fired when the run request settles (success or error). */
-  onRunSettled?: () => void;
 }) {
   const t = useTranslations("prReview");
   const router = useRouter();
@@ -38,14 +33,11 @@ export function RunReviewDropdown({
   const all = agents ?? [];
   const hasEnabled = all.some((a) => a.enabled);
 
-  const kick = async (opts: { all?: boolean; agentId?: string }) => {
+  // Errors surface through the global mutation toast; success invalidates the
+  // PR's run lists inside useRunReview, which starts live polling.
+  const kick = (opts: { all?: boolean; agentId?: string }) => {
     onRunStart?.();
-    try {
-      const res = await run.mutateAsync({ prId, ...opts });
-      onRunsStarted?.(res.runs.map((r) => r.run_id));
-    } finally {
-      onRunSettled?.();
-    }
+    run.mutate({ prId, ...opts });
   };
 
   // List EVERY agent (not just enabled) so they're always visible; a specific
@@ -55,10 +47,10 @@ export function RunReviewDropdown({
     ? all.map((a) => ({
         label: a.name,
         icon: "Cpu" as const,
-        hint: a.enabled ? a.model : `${a.model} · disabled`,
+        hint: a.enabled ? a.model : t("runReview.disabledHint", { model: a.model }),
         onClick: () => kick({ agentId: a.id }),
       }))
-    : [{ label: "No agents yet — create one", icon: "Plus", muted: true, onClick: () => router.push("/agents") }];
+    : [{ label: t("runReview.noAgents"), icon: "Plus", muted: true, onClick: () => router.push("/agents") }];
 
   const items: DropdownItemDef[] = [
     // Merged/closed PRs can still be reviewed (informational only); lead with a

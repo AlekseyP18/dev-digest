@@ -36,3 +36,13 @@ export function toModelOptions(
     m.pricing || m.contextLength ? { value: m.id, label: modelLabel(m) } : m.id,
   );
 }
+
+/** Keep the current value selectable even when the live list doesn't include it
+ *  (a registry default from another provider, or an empty list after a bad key). */
+export function withCurrentOption(
+  options: (string | { value: string; label: string })[],
+  value: string,
+): (string | { value: string; label: string })[] {
+  const has = options.some((o) => (typeof o === "string" ? o : o.value) === value);
+  return has ? options : [value, ...options];
+}

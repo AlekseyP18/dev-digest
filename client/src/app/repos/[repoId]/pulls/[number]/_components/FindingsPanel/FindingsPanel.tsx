@@ -6,12 +6,12 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import { Toggle, EmptyState } from "@devdigest/ui";
 import type { FindingRecord, Severity } from "@devdigest/shared";
-import { countBySeverity } from "@/components/finding-severity";
+import { countBySeverity } from "@/lib/severity";
 import { FindingCard } from "../FindingCard";
 import { SeverityFilterPills } from "../SeverityFilterPills";
-import { useFindingAction } from "../../../../../../../lib/hooks/reviews";
-import { KEY_TO_ACTION } from "./constants";
+import { useFindingAction } from "@/lib/hooks/reviews";
 import { confidentFindings, visibleFindings } from "./helpers";
+import { useFindingShortcuts } from "./useFindingShortcuts";
 import { s } from "./styles";
 
 export function FindingsPanel({
@@ -19,11 +19,14 @@ export function FindingsPanel({
   prId,
   repoFullName,
   headSha,
+  shortcutsEnabled = true,
 }: {
   findings: FindingRecord[];
   prId: string;
   repoFullName?: string | null;
   headSha?: string | null;
+  /** j/k/a/d listen on window — enable on at most one panel per page. */
+  shortcutsEnabled?: boolean;
 }) {
   const t = useTranslations("prReview");
   const action = useFindingAction();
@@ -48,20 +51,13 @@ export function FindingsPanel({
     setFocusIdx(0);
   };
 
-  // j/k navigation + a/d shortcuts on the focused finding (keyboard).
-  React.useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-      if (e.key === "j") setFocusIdx((i) => Math.min(i + 1, shown.length - 1));
-      else if (e.key === "k") setFocusIdx((i) => Math.max(i - 1, 0));
-      else if (KEY_TO_ACTION[e.key] && shown[focusIdx]) {
-        action.mutate({ findingId: shown[focusIdx]!.id, action: KEY_TO_ACTION[e.key]!, prId });
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [shown, focusIdx, action, prId]);
+  useFindingShortcuts({
+    enabled: shortcutsEnabled,
+    shown,
+    focusIdx,
+    setFocusIdx,
+    onAction: (f, act) => action.mutate({ findingId: f.id, action: act, prId }),
+  });
 
   return (
     <div>

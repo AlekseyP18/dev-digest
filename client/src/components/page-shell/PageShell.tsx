@@ -1,13 +1,10 @@
-/* PageShell.tsx — small helpers for route pages: a section container and a
-   feature-placeholder that renders inside the app shell with an EmptyState.
-   Feature agents (A1–A6) replace `FeaturePlaceholder` with their real screen. */
+/* PageShell.tsx — small helpers for route pages: a section container and the
+   route-level Suspense fallback rendered inside the app shell. */
 "use client";
 
 import React from "react";
-import { useTranslations } from "next-intl";
-import { EmptyState, type IconName } from "@devdigest/ui";
-import type { Crumb } from "@devdigest/ui";
-import { AppShell } from "../app-shell";
+import { Skeleton } from "@devdigest/ui";
+import { AppShell } from "@/components/app-shell";
 import { s } from "./styles";
 
 export function PageContainer({
@@ -37,30 +34,18 @@ export function PageContainer({
   );
 }
 
-/** Placeholder for routes owned by feature agents. Renders full shell + EmptyState. */
-export function FeaturePlaceholder({
-  crumb,
-  title,
-  icon = "Boxes",
-  owner,
-  body,
-}: {
-  crumb?: Crumb[];
-  title: string;
-  icon?: IconName;
-  owner: string;
-  body?: string;
-}) {
-  const t = useTranslations("shell");
+/**
+ * Suspense fallback for a route: the real shell with a neutral skeleton, so the
+ * nav stays visible while a page that reads search params hydrates.
+ */
+export function PageFallback() {
   return (
-    <AppShell crumb={crumb}>
-      <PageContainer>
-        <EmptyState
-          icon={icon}
-          title={title}
-          body={body ?? t("featurePlaceholder.defaultBody", { owner })}
-        />
-      </PageContainer>
+    <AppShell>
+      <div style={s.fallback}>
+        <Skeleton height={28} width={320} />
+        <Skeleton height={16} width={220} />
+        <Skeleton height={200} />
+      </div>
     </AppShell>
   );
 }

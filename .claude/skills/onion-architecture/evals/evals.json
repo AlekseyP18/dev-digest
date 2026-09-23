@@ -1,0 +1,59 @@
+{
+  "skill_name": "onion-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "name": "pulls-stats-endpoint",
+      "prompt": "Додай ендпоінт GET /pulls/:id/stats у server: кількість змінених файлів, сумарні additions/deletions і кількість findings по severity (по останньому ревʼю кожного агента). Контракт поклади в @devdigest/shared.",
+      "expected_output": "Thin route; SQL in a repository; orchestration in a service with explicit deps; severity/sum math in a pure helper with a unit test; contract in shared (+ client copy); no drizzle in routes/services.",
+      "files": [],
+      "assertions": [
+        "Contract added in server @devdigest/shared",
+        "Contract mirrored into client vendor/shared",
+        "Query lives in a repository file",
+        "Hermetic unit test for the pure stats/severity math",
+        "Orchestration in a service.ts",
+        "No new Drizzle/db-schema usage outside repositories",
+        "No SDK import or raw fetch() outside src/adapters",
+        "New code does not use Container as a service locator (ctor param or this.container.x)",
+        "No Fastify types/imports in services, repositories or domain files"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pr-refresh-to-service",
+      "prompt": "GET /pulls/:id в server/src/modules/pulls/routes.ts сам ходить у GitHub і перезаписує prFiles/prCommits окремими запитами. Винеси цю логіку з роута в нормальне місце, щоб оновлення файлів і комітів було атомарним.",
+      "expected_output": "PullsService.refreshDetail (or similar) with explicit deps; repository method doing delete+insert of files and commits in ONE db.transaction; GitHub fetch happens before/outside the transaction; route becomes thin; Tx/DbExecutor type added.",
+      "files": [],
+      "assertions": [
+        "Adds a db.transaction for the files+commits rewrite",
+        "Transaction lives in a repository file",
+        "No GitHub/network call inside the transaction",
+        "prFiles/prCommits writes removed from pulls/routes.ts",
+        "Introduces a Tx/DbExecutor type (no Drizzle leak to service)",
+        "No new Drizzle/db-schema usage outside repositories",
+        "No SDK import or raw fetch() outside src/adapters",
+        "New code does not use Container as a service locator (ctor param or this.container.x)",
+        "No Fastify types/imports in services, repositories or domain files"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "slack-notification-integration",
+      "prompt": "Хочу після завершення review run відправляти повідомлення в Slack через incoming webhook (URL зберігається як секрет SLACK_WEBHOOK_URL). Зроби це.",
+      "expected_output": "Port interface (e.g. Notifier) in vendor/shared/adapters.ts; adapter under src/adapters/<port>/ with the HTTP call; lazy container getter reading the secret via SecretsProvider + ContainerOverrides entry; mock in adapters/mocks.ts; run-executor/service depends on the port type only; failure does not break the run.",
+      "files": [],
+      "assertions": [
+        "Port interface added in vendor/shared/adapters.ts",
+        "Adapter implementation under src/adapters/<port>/",
+        "Mock added to adapters/mocks.ts",
+        "Container getter + ContainerOverrides entry",
+        "SLACK_WEBHOOK_URL added to SecretKey and read via SecretsProvider (not process.env)",
+        "No new Drizzle/db-schema usage outside repositories",
+        "No SDK import or raw fetch() outside src/adapters",
+        "New code does not use Container as a service locator (ctor param or this.container.x)",
+        "No Fastify types/imports in services, repositories or domain files"
+      ]
+    }
+  ]
+}

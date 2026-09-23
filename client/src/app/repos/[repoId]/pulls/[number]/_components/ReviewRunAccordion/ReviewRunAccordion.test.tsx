@@ -2,15 +2,17 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { FindingRecord, ReviewRecord } from "@devdigest/shared";
-import prReview from "../../../../../../../../messages/en/prReview.json";
-import common from "../../../../../../../../messages/en/common.json";
 
-vi.mock("../../../../../../../lib/hooks/reviews", () => ({
+vi.mock("@/lib/hooks/reviews", () => ({
   useDeleteReview: () => ({ mutate: vi.fn(), isPending: false }),
   useFindingAction: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 import { ReviewRunAccordion } from "./ReviewRunAccordion";
+import { namespace } from "@/test/intl";
+
+const prReview = namespace("prReview");
+const common = namespace("common");
 
 afterEach(cleanup);
 

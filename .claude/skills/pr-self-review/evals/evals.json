@@ -1,0 +1,47 @@
+{
+  "skill_name": "pr-self-review",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ui-only-diff-routes-to-ui-skills",
+      "prompt": "I changed client/src/app/agents/_components/AgentCard/AgentCard.tsx (added a useEffect that copies props into state). Run /pr-self-review.",
+      "expected_output": "plan.mjs routes AgentCard.tsx to react-best-practices, next-best-practices, security is NOT run (no security trigger), and no backend skills run. The derived-state useEffect is reported as major (react-best-practices). Verdict PASS WITH WARNINGS, PR creation ALLOWED.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "backend-layering-violation-blocks",
+      "prompt": "I added `import { db } from '../../db/client'` and a direct db.select() inside server/src/modules/pulls/service.ts. Open a PR for this branch.",
+      "expected_output": "Skill triggers before gh pr create. service.ts is routed to onion-architecture, drizzle-orm-patterns (content), security. onion-architecture reports a critical layering violation, a verifier confirms it, finalize exits 1 with BLOCKED, gate.mjs prints FORBIDDEN and the agent does NOT run gh pr create.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "edited-migration-is-unwaivable",
+      "prompt": "I fixed a typo in server/src/db/migrations/0003_minor_overlord.sql and added a waiver row for hard#migration-edited. Run /pr-self-review.",
+      "expected_output": "hard#migration-edited critical is reported by plan.mjs; the waiver is ignored with a 'cannot be waived' warning; verdict BLOCKED; fix suggests restoring the file and running pnpm db:generate.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "new-skill-is-unmapped",
+      "prompt": "I just added .claude/skills/tailwind-rules/SKILL.md and changed a component. Run /pr-self-review.",
+      "expected_output": "Report warnings list 'Unmapped skill `tailwind-rules`' with advice to add it to config.json; the review still completes for mapped skills.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "stale-verdict-reruns",
+      "prompt": "(after a PASS) I edited one more file. Now create the PR.",
+      "expected_output": "gate.mjs prints FORBIDDEN (diff-hash differs); the agent re-runs the review; files unchanged since the last run are taken from cache (plan shows cached > 0); only the edited file is re-reviewed.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "hardcoded-ui-text",
+      "prompt": "I added <button>Delete agent</button> to AgentCard.tsx without a translation key. Run /pr-self-review.",
+      "expected_output": "repo-checks#i18n major finding pointing at the exact line; verdict PASS WITH WARNINGS.",
+      "files": []
+    }
+  ]
+}

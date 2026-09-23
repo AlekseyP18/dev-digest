@@ -1,11 +1,10 @@
 import type { CSSProperties } from "react";
 
-/** Co-located styles for AgentCard (extracted from inline styles). */
+/** Co-located styles for AgentCard. */
 export const s = {
   card: (active: boolean, enabled: boolean): CSSProperties => ({
     padding: 14,
     borderRadius: 8,
-    cursor: "pointer",
     border: "1px solid " + (active ? "var(--border-strong)" : "var(--border)"),
     background: active ? "var(--bg-hover)" : "var(--bg-elevated)",
     opacity: enabled ? 1 : 0.6,
@@ -40,6 +39,15 @@ export const s = {
     textOverflow: "ellipsis",
   } satisfies CSSProperties,
   metaRow: { display: "flex", alignItems: "center", gap: 8 } satisfies CSSProperties,
+  deleteBtn: (pending: boolean): CSSProperties => ({
+    background: "none",
+    border: "none",
+    cursor: pending ? "not-allowed" : "pointer",
+    color: "var(--text-muted)",
+    display: "inline-flex",
+    padding: 4,
+  }),
+  spinning: { animation: "ddspin 1s linear infinite" } satisfies CSSProperties,
   modelChip: (color: string): CSSProperties => ({
     fontSize: 12,
     fontWeight: 600,

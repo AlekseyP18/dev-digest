@@ -5,7 +5,7 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import { LiveLogStream, type LogLine } from "@devdigest/ui";
-import { useRunEvents } from "../../../../../../../lib/hooks/reviews";
+import { useRunEvents } from "@/lib/hooks/reviews";
 import { LOG_HEIGHT } from "./constants";
 import { s } from "./styles";
 
@@ -14,16 +14,27 @@ export function RunStatus({
   onDone,
 }: {
   runIds: string[];
+  /** Fired once each time the streams go from running to closed. */
   onDone?: () => void;
 }) {
   const t = useTranslations("prReview");
   const { events, running } = useRunEvents(runIds);
-  const wasRunning = React.useRef(false);
+  const onDoneRef = React.useRef(onDone);
+  React.useLayoutEffect(() => {
+    onDoneRef.current = onDone;
+  });
 
+  // Fire on the running → settled transition only; re-renders after settling
+  // (e.g. from the invalidations onDone itself triggers) must not re-fire it.
+  const wasRunning = React.useRef(false);
   React.useEffect(() => {
-    if (running) wasRunning.current = true;
-    if (!running && wasRunning.current) onDone?.();
-  }, [running, onDone]);
+    if (running) {
+      wasRunning.current = true;
+    } else if (wasRunning.current) {
+      wasRunning.current = false;
+      onDoneRef.current?.();
+    }
+  }, [running]);
 
   if (runIds.length === 0) return null;
 

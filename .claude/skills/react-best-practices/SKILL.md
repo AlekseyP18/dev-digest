@@ -7,6 +7,15 @@ description: "Modern React best practices and anti-pattern catalog (2025-26). Us
 
 Modern React conventions (2025-26). Covers what to do and what to avoid. For code examples, see [examples.md](examples.md).
 
+## Project overrides (DevDigest `client/`)
+
+Where this generic guide conflicts with the repo, the repo wins. Folder and placement questions go to `frontend-ui-architecture`.
+- **Styling:** style objects in a colocated `styles.ts` (exports `s`) using CSS variables, not Tailwind utility classes. The "Tailwind CSS" section below doesn't apply.
+- **No container/presentational split:** data comes from custom hooks in `src/lib/hooks/<domain>.ts` (TanStack Query). The "Container components fetch data" line doesn't apply.
+- **Data hooks:** `useQuery`/`useMutation` over `src/lib/api.ts`. There is no `useApiQuery`/`useApiMutation` and no Axios, so those sections don't apply.
+- **Shared utilities:** `src/lib/<noun>.ts` named for what they do, not a `utils/` folder.
+- **Line count:** the 200-line / 5–7-prop limits are review signals, not hard rules. Split by the triggers in `frontend-ui-architecture` › When to split.
+
 ## Severity Levels
 
 Each rule is tagged with a severity for use by consuming agents:

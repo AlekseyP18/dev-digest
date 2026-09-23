@@ -5,9 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type ShellContext } from "@devdigest/ui";
-import { useTheme } from "../../../lib/theme";
-import { useActiveRepo } from "../../../lib/repo-context";
-import { usePulls, useDeleteRepo } from "../../../lib/hooks";
+import { useTheme } from "@/lib/theme";
+import { useActiveRepo } from "@/lib/repo-context";
+import { usePulls, useDeleteRepo } from "@/lib/hooks/core";
+import { useConfirm } from "@/lib/confirm";
 import { activeKeyFor, toShellRepo } from "../helpers";
 
 interface ShellContextOptions {
@@ -27,6 +28,7 @@ export function useShellContext({ onOpenCommandPalette }: ShellContextOptions): 
   const { repoId, repos, activeRepo, setRepoId } = useActiveRepo();
   const { data: pulls } = usePulls(repoId);
   const deleteRepo = useDeleteRepo();
+  const confirm = useConfirm();
 
   const onSelectRepo = React.useCallback(
     (id: string) => {
@@ -39,11 +41,14 @@ export function useShellContext({ onOpenCommandPalette }: ShellContextOptions): 
   const onAddRepo = React.useCallback(() => router.push("/onboarding"), [router]);
 
   const onRemoveRepo = React.useCallback(
-    (id: string) => {
+    async (id: string) => {
       const target = repos.find((r) => r.id === id);
-      const ok = window.confirm(
-        t("removeRepo.confirm", { name: target?.full_name ?? t("removeRepo.fallbackName") }),
-      );
+      const ok = await confirm({
+        title: t("removeRepo.confirm", { name: target?.full_name ?? t("removeRepo.fallbackName") }),
+        body: t("removeRepo.confirmBody"),
+        confirmLabel: t("removeRepo.confirmAction"),
+        danger: true,
+      });
       if (!ok) return;
       deleteRepo.mutate(id, {
         onSuccess: () => {
@@ -54,7 +59,12 @@ export function useShellContext({ onOpenCommandPalette }: ShellContextOptions): 
         },
       });
     },
-    [repos, repoId, t, deleteRepo, router],
+    [repos, repoId, t, confirm, deleteRepo, router],
+  );
+
+  const syncedLabel = React.useCallback(
+    (synced: boolean) => t(synced ? "repoSync.synced" : "repoSync.notSynced"),
+    [t],
   );
 
   return React.useMemo<ShellContext>(
@@ -62,8 +72,8 @@ export function useShellContext({ onOpenCommandPalette }: ShellContextOptions): 
       Link,
       activeKey: activeKeyFor(pathname),
       repoId,
-      repos: repos.map(toShellRepo),
-      activeRepo: activeRepo ? toShellRepo(activeRepo) : null,
+      repos: repos.map((r) => toShellRepo(r, syncedLabel)),
+      activeRepo: activeRepo ? toShellRepo(activeRepo, syncedLabel) : null,
       theme,
       onToggleTheme: toggle,
       onOpenCommandPalette,
@@ -86,6 +96,7 @@ export function useShellContext({ onOpenCommandPalette }: ShellContextOptions): 
       onAddRepo,
       onRemoveRepo,
       pulls,
+      syncedLabel,
     ],
   );
 }

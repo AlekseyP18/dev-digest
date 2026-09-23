@@ -62,6 +62,11 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   return (await res.json()) as T;
 }
 
+/** SSE stream of one run's events (consumed with EventSource, not fetch). */
+export function runEventsUrl(runId: string): string {
+  return `${API_BASE}/runs/${runId}/events`;
+}
+
 export const api = {
   get: <T>(path: string) => apiFetch<T>(path),
   post: <T>(path: string, body?: unknown) =>

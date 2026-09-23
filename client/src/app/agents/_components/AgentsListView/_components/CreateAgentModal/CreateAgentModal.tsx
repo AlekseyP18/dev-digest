@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, Modal, FormField, TextInput, SelectInput, Textarea } from "@devdigest/ui";
 import type { Provider } from "@devdigest/shared";
-import { useCreateAgent } from "../../../../../../lib/hooks/agents";
+import { useCreateAgent } from "@/lib/hooks/agents";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODAL_WIDTH, PROVIDER_OPTIONS } from "./constants";
 import { s } from "./styles";
 
@@ -20,17 +20,23 @@ export function CreateAgentModal({ onClose }: { onClose: () => void }) {
   const [model, setModel] = React.useState(DEFAULT_MODEL);
   const [systemPrompt, setSystemPrompt] = React.useState(t("create.defaultSystemPrompt"));
 
-  const submit = async () => {
-    const agent = await create.mutateAsync({
-      name: name.trim() || t("create.defaultName"),
-      description,
-      provider,
-      model,
-      system_prompt: systemPrompt,
-    });
-    onClose();
-    router.push(`/agents/${agent.id}?tab=config`);
-  };
+  // Errors are toasted by the global mutation handler; the modal stays open.
+  const submit = () =>
+    create.mutate(
+      {
+        name: name.trim() || t("create.defaultName"),
+        description,
+        provider,
+        model,
+        system_prompt: systemPrompt,
+      },
+      {
+        onSuccess: (agent) => {
+          onClose();
+          router.push(`/agents/${agent.id}?tab=config`);
+        },
+      },
+    );
 
   return (
     <Modal

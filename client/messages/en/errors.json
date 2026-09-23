@@ -1,0 +1,8 @@
+{
+  "title": "Something went wrong",
+  "body": "This screen hit an unexpected error. Try again, or go back to your pull requests.",
+  "retry": "Try again",
+  "home": "Go to pull requests",
+  "notFoundTitle": "Page not found",
+  "notFoundBody": "There is no page at this address. It may have moved, or the link is stale."
+}

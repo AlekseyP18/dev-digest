@@ -12,6 +12,8 @@ export const s = {
   } satisfies CSSProperties,
   navTitle: { fontSize: 16, fontWeight: 700, padding: "2px 10px 14px" } satisfies CSSProperties,
   navItem: (on: boolean): CSSProperties => ({
+    display: "block",
+    textDecoration: "none",
     padding: "8px 12px",
     borderRadius: 6,
     fontSize: 14,
