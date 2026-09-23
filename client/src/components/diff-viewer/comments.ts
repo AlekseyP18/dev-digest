@@ -2,7 +2,7 @@
    Pure helpers + the API shape the viewer needs; React bits live in
    DiffComments.tsx. Comments are GitHub PR review comments, proxied live. */
 import type { CSSProperties } from "react";
-import type { PrReviewComment } from "../../lib/types";
+import type { PrReviewComment } from "@/lib/types";
 import type { Line } from "./helpers";
 
 /** What the viewer needs to read + write inline comments. */
@@ -108,6 +108,7 @@ export function partitionThreads(
 // ---- styles (layout only; cards/inputs/buttons reuse @devdigest/ui) ----
 export const cs = {
   rowWrap: { position: "relative" } satisfies CSSProperties,
+  spacer: { flex: 1 } satisfies CSSProperties,
   addBtn: {
     position: "absolute",
     left: 2,

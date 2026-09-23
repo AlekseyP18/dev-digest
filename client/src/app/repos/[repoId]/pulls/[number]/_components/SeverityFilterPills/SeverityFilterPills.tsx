@@ -7,7 +7,7 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import { Icon, SEV } from "@devdigest/ui";
 import type { Severity, SeverityCounts } from "@devdigest/shared";
-import { SEVERITY_KEYS } from "@/components/finding-severity";
+import { SEVERITY_KEYS } from "@/lib/severity";
 import { s } from "./styles";
 
 export function SeverityFilterPills({

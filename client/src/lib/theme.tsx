@@ -4,36 +4,45 @@
 import React from "react";
 
 type Theme = "dark" | "light";
-const ThemeCtx = React.createContext<{ theme: Theme; toggle: () => void; set: (t: Theme) => void }>({
-  theme: "dark",
-  toggle: () => {},
-  set: () => {},
-});
+const STORAGE_KEY = "dd-theme";
+
+interface ThemeApi {
+  theme: Theme;
+  toggle: () => void;
+  set: (t: Theme) => void;
+}
+
+const ThemeCtx = React.createContext<ThemeApi>({ theme: "dark", toggle: () => {}, set: () => {} });
+
+// The source of truth is `data-theme` on <html> (set before paint by
+// themeNoFlashScript), so React reads it as an external store instead of
+// copying it into state in an effect.
+function subscribe(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return () => observer.disconnect();
+}
+const getTheme = (): Theme => (document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark");
+const getServerTheme = (): Theme => "dark";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = React.useState<Theme>("dark");
-
-  // hydrate from the attribute set by the no-FOUC inline script
-  React.useEffect(() => {
-    const current = (document.documentElement.getAttribute("data-theme") as Theme) || "dark";
-    setTheme(current);
-  }, []);
+  const theme = React.useSyncExternalStore(subscribe, getTheme, getServerTheme);
 
   const set = React.useCallback((t: Theme) => {
-    setTheme(t);
     document.documentElement.setAttribute("data-theme", t);
     try {
-      localStorage.setItem("dd-theme", t);
+      localStorage.setItem(STORAGE_KEY, t);
     } catch {
-      /* ignore */
+      /* storage unavailable (private mode) — the attribute still applies for this session */
     }
   }, []);
 
-  const toggle = React.useCallback(() => {
-    set(theme === "dark" ? "light" : "dark");
-  }, [theme, set]);
+  const value = React.useMemo<ThemeApi>(
+    () => ({ theme, set, toggle: () => set(theme === "dark" ? "light" : "dark") }),
+    [theme, set],
+  );
 
-  return <ThemeCtx.Provider value={{ theme, toggle, set }}>{children}</ThemeCtx.Provider>;
+  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme() {

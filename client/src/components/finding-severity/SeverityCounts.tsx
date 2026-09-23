@@ -5,7 +5,7 @@
 import React from "react";
 import { Icon, SEV } from "@devdigest/ui";
 import type { SeverityCounts as Counts } from "@devdigest/shared";
-import { SEVERITY_KEYS, totalFindings } from "./helpers";
+import { SEVERITY_KEYS, totalFindings } from "@/lib/severity";
 import { s } from "./styles";
 
 export function SeverityCounts({ counts }: { counts: Counts | null | undefined }) {

@@ -18,6 +18,8 @@ Entry (every bullet, incl. Session Notes / Open Questions — date AND `path:lin
 - **2026-09-16** · `run_traces.trace` is untyped jsonb read back with a cast, so old documents lack any newly added `RunStats` field → make new trace fields `.nullish()` in the contract and treat undefined as unknown on the client · `server/src/vendor/shared/contracts/trace.ts:69`
 - **2026-09-16** · `seed()` creates PR #482's review/findings/demo run ONLY inside the `if (!pr)` branch, so re-seeding an existing dev DB never adds newly seeded rows → new seed fixtures show up only on a fresh DB (`./scripts/e2e.sh` / CI); to see them locally, drop the DB and reseed · `server/src/db/seed.ts:102`
 - **2026-09-17** · One "Run Review" writes a separate `reviews` row per agent, so "the newest review" is just whichever agent finished last (often a 0-finding one) → roll up per-PR findings over the latest review of EACH `agent_id` (`latestReviewIdsPerAgent`), not the single newest row · `server/src/modules/pulls/severity.ts:32`
+- **2026-09-22** · `server/src` has zero `db.transaction` calls, so multi-write use cases are non-atomic (PR refresh does `delete`+`insert` of `prFiles`/`prCommits` as separate statements in the route) → when moving such code into a service, wrap only the DB writes in a service-owned transaction (`DbExecutor = Db | Tx`, see skill `onion-architecture/references/tools.md`), never around the GitHub fetch · `server/src/modules/pulls/routes.ts:224`
+- **2026-09-22** · `server/CLAUDE.md` is a symlink to `server/AGENTS.md` (same for root/client/e2e/reviewer-core) → edit `AGENTS.md`; tools that replace the file instead of writing through it would break the link · `server/AGENTS.md:1`
 
 ## Tool & Library Notes
 
@@ -30,6 +32,7 @@ Entry (every bullet, incl. Session Notes / Open Questions — date AND `path:lin
 - **2026-09-17** · Fix: PR list `severity_counts` summed per agent (#1551 showed "—"); added 1 entry above · `server/src/modules/pulls/routes.ts:148`
 - **2026-09-17** · ESLint 9 flat config (`caughtErrors: none`, migrations/clones ignored) + `lint` in CI typecheck job; one-off normalization of entries to `path:line` format; no new entries · `server/eslint.config.mjs:1`
 - **2026-09-20** · Wrote `docs/{README,overview,structure,patterns}.md` (package-root-relative paths) and the pointer lines in `CLAUDE.md`; added 1 Open Question (stale skip-worktree claim) · `server/docs/README.md:1`
+- **2026-09-22** · Created skill `.claude/skills/onion-architecture/` (rings, MUST rules, audit `rg` commands, known-debt table) + pointer in `server/AGENTS.md` Read when; added 2 Codebase Patterns entries · `.claude/skills/onion-architecture/SKILL.md:1`
 
 ## Open Questions
 - **2026-09-20** · `TESTING.md:83` and the three server/e2e workflows say `server/package.json` is `skip-worktree`, but `git ls-files -v server/package.json` prints `H` (flag NOT set, the file shows as modified in `git status`) and `server-integration.yml:1` counts 12 `*.it.test.ts` files where there are 6 → decide whether to re-set the flag or update TESTING.md + workflow comments; until then do not rely on "local variant" reasoning when editing `server/package.json` scripts · `TESTING.md:83`

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "../lib/providers";
 import { themeNoFlashScript } from "../lib/theme";
 
-export const metadata: Metadata = {
-  title: "DevDigest",
-  description: "Local-first AI PR review tool",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: { default: t("appName"), template: `%s · ${t("appName")}` },
+    description: t("description"),
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
@@ -26,9 +28,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           (one level deep) — real mismatches in descendants are still reported. */}
       <body suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Suspense fallback={null}>
-            <Providers>{children}</Providers>
-          </Suspense>
+          {/* No app-wide Suspense: pages that read search params wrap their own
+              view in <Suspense fallback={<PageFallback />}>. */}
+          <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -4,9 +4,11 @@
 
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, API_BASE } from "../api";
+import { api, runEventsUrl } from "../api";
+import { qk } from "./keys";
 import { notify } from "../toast";
 import type {
+  ActiveRun,
   FindingActionKind,
   PrReviewComment,
   ReviewRecord,
@@ -16,18 +18,12 @@ import type {
 } from "@devdigest/shared";
 
 // ---- Active (in-flight) runs — server-side source of truth ----
-export interface ActiveRun {
-  run_id: string;
-  agent_id: string | null;
-  agent_name: string | null;
-  ran_at: string | null;
-}
 
 /** In-flight runs for a PR, from the server (agent_runs where status='running').
    Survives reloads/devices; polls while anything is running so it self-clears. */
 export function usePrActiveRuns(prId: string | null | undefined) {
   return useQuery({
-    queryKey: ["pr-active-runs", prId],
+    queryKey: qk.prActiveRuns(prId),
     queryFn: () => api.get<ActiveRun[]>(`/pulls/${prId}/runs/active`),
     enabled: !!prId,
     refetchInterval: (query) => ((query.state.data?.length ?? 0) > 0 ? 4000 : false),
@@ -39,7 +35,7 @@ export function usePrActiveRuns(prId: string | null | undefined) {
    reload (DB-backed). Polls while anything is running so it self-updates. */
 export function usePrRuns(prId: string | null | undefined) {
   return useQuery({
-    queryKey: ["pr-runs", prId],
+    queryKey: qk.prRuns(prId),
     queryFn: () => api.get<RunSummary[]>(`/pulls/${prId}/runs`),
     enabled: !!prId,
     refetchInterval: (query) =>
@@ -50,10 +46,25 @@ export function usePrRuns(prId: string | null | undefined) {
 // ---- Persisted reviews + findings for a PR ----
 export function usePrReviews(prId: string | null | undefined) {
   return useQuery({
-    queryKey: ["reviews", prId],
+    queryKey: qk.reviews(prId),
     queryFn: () => api.get<ReviewRecord[]>(`/pulls/${prId}/reviews`),
     enabled: !!prId,
   });
+}
+
+/**
+ * Callback for "a run just settled (done, failed or cancelled)": refresh the
+ * in-flight list, the run history and the persisted reviews of the PR, so a
+ * just-failed run shows up in the timeline without a reload.
+ */
+export function useRunSettled(prId: string | null | undefined) {
+  const qc = useQueryClient();
+  return React.useCallback(() => {
+    if (!prId) return;
+    qc.invalidateQueries({ queryKey: qk.prActiveRuns(prId) });
+    qc.invalidateQueries({ queryKey: qk.prRuns(prId) });
+    qc.invalidateQueries({ queryKey: qk.reviews(prId) });
+  }, [qc, prId]);
 }
 
 /** Delete one run from the PR's run history (+ its trace). */
@@ -64,8 +75,8 @@ export function useDeleteRun(prId: string | null | undefined) {
     // Deleting a run also deletes the review it produced (server-side), so drop
     // both the timeline and the Review Runs list from cache.
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["pr-runs", prId] });
-      qc.invalidateQueries({ queryKey: ["reviews", prId] });
+      qc.invalidateQueries({ queryKey: qk.prRuns(prId) });
+      qc.invalidateQueries({ queryKey: qk.reviews(prId) });
     },
   });
 }
@@ -82,7 +93,7 @@ export function useDeleteReview(prId: string | null | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (reviewId: string) => api.del<{ ok: boolean }>(`/reviews/${reviewId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["reviews", prId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.reviews(prId) }),
   });
 }
 
@@ -90,7 +101,7 @@ export function useDeleteReview(prId: string | null | undefined) {
 /** Existing GitHub PR review comments, fetched live. */
 export function usePrComments(prId: string | null | undefined) {
   return useQuery({
-    queryKey: ["pr-comments", prId],
+    queryKey: qk.prComments(prId),
     queryFn: () => api.get<PrReviewComment[]>(`/pulls/${prId}/comments`),
     enabled: !!prId,
   });
@@ -110,7 +121,7 @@ export function useCreatePrComment(prId: string | null | undefined) {
   return useMutation({
     mutationFn: (input: CreateCommentInput) =>
       api.post<PrReviewComment>(`/pulls/${prId}/comments`, input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["pr-comments", prId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.prComments(prId) }),
   });
 }
 
@@ -129,8 +140,12 @@ export function useRunReview() {
         ...(agentId ? { agentId } : {}),
         ...(all ? { all } : {}),
       }),
+    // New runs are in flight now: refresh the live list (starts its polling),
+    // the timeline and the reviews.
     onSuccess: (_d, { prId }) => {
-      qc.invalidateQueries({ queryKey: ["reviews", prId] });
+      qc.invalidateQueries({ queryKey: qk.prActiveRuns(prId) });
+      qc.invalidateQueries({ queryKey: qk.prRuns(prId) });
+      qc.invalidateQueries({ queryKey: qk.reviews(prId) });
     },
   });
 }
@@ -155,34 +170,46 @@ export function useFindingAction() {
         reply ? { reply } : undefined,
       ),
     onSuccess: (_d, { prId }) => {
-      if (prId) qc.invalidateQueries({ queryKey: ["reviews", prId] });
+      if (prId) qc.invalidateQueries({ queryKey: qk.reviews(prId) });
     },
   });
 }
 
 /**
  * Subscribe to a run's SSE event stream. Returns the accumulated RunEvents and a
- * `running` flag (true until the stream closes). Live status for the
+ * `running` flag (true until every stream closes). Live status for the
  * RunReviewDropdown / Live Log. Multiple runIds are subscribed in parallel.
+ * Events are stored with the run-id set they belong to, so switching runs shows
+ * an empty log right away without resetting state in the effect.
  */
 export function useRunEvents(runIds: string[]) {
-  const [events, setEvents] = React.useState<RunEvent[]>([]);
-  const [running, setRunning] = React.useState(false);
   const key = runIds.join(",");
+  const [stream, setStream] = React.useState<{ key: string; events: RunEvent[]; closed: boolean }>({
+    key: "",
+    events: [],
+    closed: true,
+  });
 
   React.useEffect(() => {
-    if (runIds.length === 0) return;
-    setEvents([]);
-    setRunning(true);
+    if (!key) return;
     const sources: EventSource[] = [];
-    let open = runIds.length;
+    let open = 0;
 
-    for (const runId of runIds) {
-      const es = new EventSource(`${API_BASE}/runs/${runId}/events`);
+    for (const runId of key.split(",")) {
+      const es = new EventSource(runEventsUrl(runId));
+      open += 1;
+      // Re-subscribing to a set whose earlier streams already closed (A → A,B → A)
+      // starts a fresh session: running again, with an empty log.
+      es.onopen = () =>
+        setStream((prev) => (prev.key === key && !prev.closed ? prev : { key, events: [], closed: false }));
       const onMsg = (ev: MessageEvent) => {
         try {
           const parsed = JSON.parse(ev.data) as RunEvent;
-          setEvents((prev) => [...prev, parsed]);
+          setStream((prev) => ({
+            key,
+            events: prev.key === key ? [...prev.events, parsed] : [parsed],
+            closed: false,
+          }));
           // Runtime agent failures arrive as SSE `error` events (not as a
           // mutation/query error), so the global error toast never sees them —
           // surface them here so the user gets a notification without a reload.
@@ -200,17 +227,21 @@ export function useRunEvents(runIds: string[]) {
       es.onerror = () => {
         es.close();
         open -= 1;
-        if (open <= 0) setRunning(false);
+        if (open <= 0) {
+          setStream((prev) => ({ key, events: prev.key === key ? prev.events : [], closed: true }));
+        }
       };
       sources.push(es);
     }
 
     return () => {
       for (const es of sources) es.close();
-      setRunning(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  return { events, running };
+  const current = stream.key === key;
+  return {
+    events: current ? stream.events : [],
+    running: key !== "" && !(current && stream.closed),
+  };
 }

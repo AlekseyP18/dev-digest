@@ -4,16 +4,26 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-import { useRepos } from "./hooks";
+import { useRepos } from "./hooks/core";
 import type { Repo } from "./types";
 
-const RepoCtx = React.createContext<{
+const STORAGE_KEY = "dd-repo";
+
+interface RepoContextValue {
   repoId: string | null;
   setRepoId: (id: string) => void;
   repos: Repo[];
   activeRepo: Repo | null;
   reposLoaded: boolean;
-}>({ repoId: null, setRepoId: () => {}, repos: [], activeRepo: null, reposLoaded: false });
+}
+
+const RepoCtx = React.createContext<RepoContextValue>({
+  repoId: null,
+  setRepoId: () => {},
+  repos: [],
+  activeRepo: null,
+  reposLoaded: false,
+});
 
 function repoIdFromPath(pathname: string | null): string | null {
   if (!pathname) return null;
@@ -21,38 +31,53 @@ function repoIdFromPath(pathname: string | null): string | null {
   return m ? decodeURIComponent(m[1]!) : null;
 }
 
+// localStorage as an external store: read during render (no effect + setState),
+// null on the server, and in sync across tabs via the `storage` event.
+const storedRepo = {
+  listeners: new Set<() => void>(),
+  subscribe(cb: () => void) {
+    storedRepo.listeners.add(cb);
+    window.addEventListener("storage", cb);
+    return () => {
+      storedRepo.listeners.delete(cb);
+      window.removeEventListener("storage", cb);
+    };
+  },
+  get(): string | null {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  },
+  set(id: string) {
+    try {
+      localStorage.setItem(STORAGE_KEY, id);
+    } catch {
+      /* storage unavailable (private mode) — keep the in-memory choice via the URL */
+    }
+    storedRepo.listeners.forEach((cb) => cb());
+  },
+};
+
 export function RepoProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: repos, isSuccess: reposLoaded } = useRepos();
-  const [stored, setStored] = React.useState<string | null>(null);
+  const stored = React.useSyncExternalStore(storedRepo.subscribe, storedRepo.get, () => null);
 
-  React.useEffect(() => {
-    try {
-      setStored(localStorage.getItem("dd-repo"));
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const value = React.useMemo<RepoContextValue>(() => {
+    const list = repos ?? [];
+    const repoId = repoIdFromPath(pathname) ?? stored ?? list[0]?.id ?? null;
+    return {
+      repoId,
+      setRepoId: storedRepo.set,
+      repos: list,
+      activeRepo: list.find((r) => r.id === repoId) ?? null,
+      reposLoaded,
+    };
+  }, [repos, pathname, stored, reposLoaded]);
 
-  const setRepoId = React.useCallback((id: string) => {
-    setStored(id);
-    try {
-      localStorage.setItem("dd-repo", id);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const list = repos ?? [];
-  const fromPath = repoIdFromPath(pathname);
-  const repoId = fromPath ?? stored ?? list[0]?.id ?? null;
-  const activeRepo = list.find((r) => r.id === repoId) ?? null;
-
-  return (
-    <RepoCtx.Provider value={{ repoId, setRepoId, repos: list, activeRepo, reposLoaded }}>
-      {children}
-    </RepoCtx.Provider>
-  );
+  return <RepoCtx.Provider value={value}>{children}</RepoCtx.Provider>;
 }
 
 export function useActiveRepo() {

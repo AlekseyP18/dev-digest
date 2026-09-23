@@ -1,9 +1,11 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "../../../messages/en/common.json";
 import { RunCostBadge } from "./RunCostBadge";
 import { formatCost } from "@/lib/format-cost";
+import { namespace } from "@/test/intl";
+
+const messages = namespace("common");
 
 afterEach(cleanup);
 

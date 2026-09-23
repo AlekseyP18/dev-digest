@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { SeverityCounts } from "./SeverityCounts";
-import { countBySeverity, latestReviewsPerAgent } from "./helpers";
+import { countBySeverity } from "@/lib/severity";
+import { latestReviewsPerAgent } from "./helpers";
 import { finding } from "./fixtures.test-utils";
 
 afterEach(cleanup);

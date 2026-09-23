@@ -54,7 +54,7 @@ export function FileCard({ file, commenting }: { file: PrFile; commenting?: Diff
 
   return (
     <div style={s.fileCard}>
-      <div onClick={() => setOpen((o) => !o)} style={s.fileHeader}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} style={s.fileHeader}>
         <Icon.ChevronRight size={13} style={chevronFor(open)} />
         <Icon.FileText size={14} style={s.fileIcon} />
         <span className="mono" style={s.filePath}>
@@ -65,19 +65,18 @@ export function FileCard({ file, commenting }: { file: PrFile; commenting?: Diff
           <span style={s.delText}>−{file.deletions}</span>
         </span>
         {commentCount > 0 && (
-          <span
-            style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--text-muted)" }}
-          >
+          <span style={s.commentCount}>
             <Icon.MessageSquare size={12} />
             {commentCount}
           </span>
         )}
-      </div>
+      </button>
       {open && (
         <div style={s.fileBody}>
           {lines.length === 0 ? (
             <div style={s.noDiff}>{t("diffViewer.noDiffText")}</div>
           ) : (
+            // A patch's parsed lines never reorder, so the index is their identity.
             lines.map((ln, i) => (
               <CodeLine
                 key={i}

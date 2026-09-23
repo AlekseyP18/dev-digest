@@ -5,37 +5,32 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import { Button, Icon, Modal } from "@devdigest/ui";
+import { COPIED_FEEDBACK_MS } from "../../constants";
 import { s } from "../../styles";
 import { PromptModalBody } from "../PromptModalBody";
-
-const miniBtnStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: 4,
-  borderRadius: 5,
-  border: "1px solid var(--border)",
-  background: "var(--bg-elevated)",
-  color: "var(--text-muted)",
-  cursor: "pointer",
-};
 
 export function PromptBlock({ label, text, color }: { label: string; text: string; color: string }) {
   const t = useTranslations("runs");
   const [open, setOpen] = React.useState(false);
   const [full, setFull] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const copiedTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  React.useEffect(() => () => clearTimeout(copiedTimer.current), []);
   const copy = () => {
     void navigator.clipboard?.writeText(text || "");
     setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
   };
   return (
     <div style={s.promptRow}>
+      {/* The whole row toggles on click; the label button gives keyboard access. */}
       <div onClick={() => setOpen((o) => !o)} style={s.promptHead}>
-        <span style={s.promptDot(color)} />
-        <span style={s.promptLabel}>{label}</span>
-        <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+        <button type="button" aria-expanded={open} style={s.promptToggleBtn}>
+          <span style={s.promptDot(color)} />
+          <span style={s.promptLabel}>{label}</span>
+        </button>
+        <span style={s.promptActions}>
           <button
             type="button"
             title={t("trace.prompt.copy")}
@@ -44,7 +39,7 @@ export function PromptBlock({ label, text, color }: { label: string; text: strin
               e.stopPropagation();
               copy();
             }}
-            style={miniBtnStyle}
+            style={s.miniBtn}
           >
             {copied ? <Icon.Check size={12} /> : <Icon.Copy size={12} />}
           </button>
@@ -56,11 +51,11 @@ export function PromptBlock({ label, text, color }: { label: string; text: strin
               e.stopPropagation();
               setFull(true);
             }}
-            style={miniBtnStyle}
+            style={s.miniBtn}
           >
             <Icon.ExternalLink size={12} />
           </button>
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          <span style={s.promptState}>
             {open ? t("trace.collapse") : t("trace.expand")}
           </span>
         </span>

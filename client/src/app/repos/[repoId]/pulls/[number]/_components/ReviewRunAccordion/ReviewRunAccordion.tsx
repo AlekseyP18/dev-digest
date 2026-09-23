@@ -2,150 +2,120 @@
    the PR). Header shows agent + verdict + counts + score + when it ran; the
    body holds that run's VerdictBanner summary and its own FindingsPanel. A PR
    can have many runs (different agents / re-runs over time) — each is separate
-   and collapsible so older runs don't bury the latest. */
+   and collapsible so older runs don't bury the latest. Open state is controlled
+   by FindingsTab (timeline navigation), or local when `open` is omitted. */
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { Icon, Badge } from "@devdigest/ui";
 import type { ReviewRecord, Verdict } from "@devdigest/shared";
+import { FindingsPopover, SeverityCounts } from "@/components/finding-severity";
+import { useDeleteReview } from "@/lib/hooks/reviews";
+import { useConfirm } from "@/lib/confirm";
+import { countBlockers, countBySeverity } from "@/lib/severity";
+import { formatDateTime } from "@/lib/format-date";
 import { FindingsPanel } from "../FindingsPanel";
 import { VerdictBanner } from "../VerdictBanner";
-import { FindingsPopover, SeverityCounts, countBySeverity } from "@/components/finding-severity";
-import { useDeleteReview } from "../../../../../../../lib/hooks/reviews";
-
-const VERDICT_COLOR: Record<string, string> = {
-  request_changes: "var(--crit)",
-  comment: "var(--warn)",
-  approve: "var(--ok)",
-};
-
-function formatWhen(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
-}
+import { VERDICT_COLOR, VERDICT_COLOR_FALLBACK, reviewRunDomId } from "./constants";
+import { s } from "./styles";
 
 export function ReviewRunAccordion({
   review,
   prId,
   defaultOpen = false,
+  open: openProp,
+  onOpenChange,
+  shortcutsEnabled = false,
   repoFullName,
   headSha,
-  targetRunId = null,
-  targetNonce = 0,
 }: {
   review: ReviewRecord;
   prId: string;
+  /** Initial state when uncontrolled. */
   defaultOpen?: boolean;
+  /** Controlled open state (FindingsTab); omit for a self-managed accordion. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Enable the findings panel's j/k/a/d keys (only on the active run). */
+  shortcutsEnabled?: boolean;
   repoFullName?: string | null;
   headSha?: string | null;
-  /** When this matches review.run_id, the accordion opens and scrolls into view
-   *  (driven from the Timeline: clicking an agent name navigates here). */
-  targetRunId?: string | null;
-  targetNonce?: number;
 }) {
-  const [open, setOpen] = React.useState(defaultOpen);
-  const rootRef = React.useRef<HTMLDivElement | null>(null);
-  React.useEffect(() => {
-    if (review.run_id && review.run_id === targetRunId) {
-      setOpen(true);
-      rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetRunId, targetNonce, review.run_id]);
+  const t = useTranslations("prReview.reviewRun");
+  const confirm = useConfirm();
+  const [localOpen, setLocalOpen] = React.useState(defaultOpen);
+  const open = openProp ?? localOpen;
+  const toggle = () => {
+    const next = !open;
+    if (openProp === undefined) setLocalOpen(next);
+    onOpenChange?.(next);
+  };
+
   const del = useDeleteReview(prId);
   const findings = review.findings;
-  const blockers = findings.filter((f) => f.severity === "CRITICAL" && !f.dismissed_at).length;
-  const verdictColor = review.verdict ? VERDICT_COLOR[review.verdict] ?? "var(--text-muted)" : "var(--text-muted)";
+  const blockers = countBlockers(findings);
+  const agentName = review.agent_name ?? t("agentFallback");
+  const verdict = review.verdict as Verdict | null;
+
+  const onDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (await confirm({ title: t("deleteConfirm", { agent: agentName }), danger: true })) {
+      del.mutate(review.id);
+    }
+  };
 
   return (
-    <div
-      ref={rootRef}
-      id={review.run_id ? `review-run-${review.run_id}` : undefined}
-      style={{
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        background: "var(--bg-surface)",
-        marginBottom: 14,
-        overflow: "hidden",
-        scrollMarginTop: 16,
-      }}
-    >
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") setOpen((o) => !o);
-        }}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "13px 16px",
-          cursor: "pointer",
-          color: "var(--text-primary)",
-        }}
-      >
-        <Icon.Cpu size={15} style={{ color: "var(--text-muted)" }} />
-        <span style={{ fontWeight: 600, fontSize: 14 }}>{review.agent_name ?? "Agent"}</span>
-        {review.verdict && (
-          <Badge color={verdictColor} bg="transparent">
-            {review.verdict.replace("_", " ")}
-          </Badge>
-        )}
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5, color: "var(--text-muted)" }}>
+    <div id={review.run_id ? reviewRunDomId(review.run_id) : undefined} style={s.root}>
+      {/* The whole header toggles on click; the button gives keyboard + screen-reader access. */}
+      <div onClick={toggle} style={s.header}>
+        <button type="button" aria-expanded={open} style={s.toggle}>
+          <Icon.Cpu size={15} style={s.agentIcon} />
+          <span style={s.agentName}>{agentName}</span>
+          {verdict && (
+            <Badge color={VERDICT_COLOR[verdict] ?? VERDICT_COLOR_FALLBACK} bg="transparent">
+              {t(`verdict.${verdict}`)}
+            </Badge>
+          )}
+        </button>
+        <span style={s.counts}>
           {findings.length > 0 ? (
             <FindingsPopover variant="run" findings={findings} count={findings.length}>
               <SeverityCounts counts={countBySeverity(findings)} />
             </FindingsPopover>
           ) : (
-            "0 findings"
+            t("noFindings")
           )}
-          {blockers > 0 ? ` · ${blockers} blocker${blockers === 1 ? "" : "s"}` : ""}
+          {blockers > 0 ? t("blockers", { count: blockers }) : ""}
         </span>
-        <span style={{ flex: 1 }} />
+        <span style={s.spacer} />
         {review.score != null && (
           <Badge mono color="var(--text-secondary)">
             {review.score}
           </Badge>
         )}
-        <span className="mono" style={{ fontSize: 12, color: "var(--text-muted)" }}>
-          {formatWhen(review.created_at)}
+        <span className="mono" style={s.when}>
+          {formatDateTime(review.created_at)}
         </span>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (window.confirm(`Delete this "${review.agent_name ?? "agent"}" review run and its findings?`)) {
-              del.mutate(review.id);
-            }
-          }}
+          type="button"
+          onClick={onDelete}
           disabled={del.isPending}
-          title="Delete this review run"
-          aria-label="Delete this review run"
-          style={{
-            background: "none",
-            border: "none",
-            cursor: del.isPending ? "not-allowed" : "pointer",
-            color: "var(--text-muted)",
-            display: "inline-flex",
-            padding: 4,
-          }}
+          title={t("delete")}
+          aria-label={t("delete")}
+          style={s.deleteBtn(del.isPending)}
         >
-          <Icon.Trash size={14} style={del.isPending ? { animation: "ddspin 1s linear infinite" } : undefined} />
+          <Icon.Trash size={14} style={del.isPending ? s.spinning : undefined} />
         </button>
-        <Icon.ChevronDown
-          size={16}
-          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", color: "var(--text-muted)" }}
-        />
+        <Icon.ChevronDown size={16} style={s.chevron(open)} aria-hidden />
       </div>
 
       {open && (
-        <div style={{ padding: "0 16px 16px" }}>
-          {review.verdict && (
-            <div style={{ marginBottom: 16 }}>
+        <div style={s.body}>
+          {verdict && (
+            <div style={s.verdict}>
               <VerdictBanner
-                verdict={review.verdict as Verdict}
+                verdict={verdict}
                 summary={review.summary}
                 score={review.score}
                 findingsCount={findings.length}
@@ -159,6 +129,7 @@ export function ReviewRunAccordion({
             prId={prId}
             repoFullName={repoFullName}
             headSha={headSha}
+            shortcutsEnabled={shortcutsEnabled}
           />
         </div>
       )}

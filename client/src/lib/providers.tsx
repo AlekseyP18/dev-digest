@@ -1,4 +1,4 @@
-/* providers.tsx — client provider stack: React Query + Theme + active Repo. */
+/* providers.tsx — client provider stack: React Query + Theme + toasts + confirm dialog + active Repo. */
 "use client";
 
 import React from "react";
@@ -11,6 +11,7 @@ import {
 import { ThemeProvider } from "./theme";
 import { RepoProvider } from "./repo-context";
 import { ToastProvider, notify } from "./toast";
+import { ConfirmProvider } from "./confirm";
 import { ApiError } from "./api";
 
 function errorMessage(e: unknown): string {
@@ -47,7 +48,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={qc}>
       <ThemeProvider>
         <ToastProvider>
-          <RepoProvider>{children}</RepoProvider>
+          <ConfirmProvider>
+            <RepoProvider>{children}</RepoProvider>
+          </ConfirmProvider>
         </ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>

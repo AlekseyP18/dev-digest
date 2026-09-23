@@ -3,9 +3,8 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { NAV, SETTINGS_ITEM, resolveHref } from "@devdigest/ui";
-import { useActiveRepo } from "../../../lib/repo-context";
-import { G_NAV_TIMEOUT_MS } from "../constants";
-import { isTextInput } from "../helpers";
+import { useActiveRepo } from "@/lib/repo-context";
+import { G_NAV_PREFIX, G_NAV_TIMEOUT_MS, isTextInput } from "@/lib/keyboard";
 
 interface GlobalShortcutHandlers {
   onOpenPalette: () => void;
@@ -34,7 +33,7 @@ export function useGlobalShortcuts({ onOpenPalette, onOpenHelp }: GlobalShortcut
         onOpenHelp();
         return;
       }
-      if (e.key === "g") {
+      if (e.key === G_NAV_PREFIX) {
         gPending = true;
         clearTimeout(gTimer);
         gTimer = setTimeout(() => (gPending = false), G_NAV_TIMEOUT_MS);

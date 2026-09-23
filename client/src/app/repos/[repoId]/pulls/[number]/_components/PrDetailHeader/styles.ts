@@ -59,6 +59,10 @@ export const s = {
     gap: 10,
     flexShrink: 0,
   } satisfies CSSProperties,
+  mutedIcon: { color: "var(--text-muted)" } satisfies CSSProperties,
+  additions: { color: "var(--code-add-text)" } satisfies CSSProperties,
+  deletions: { color: "var(--code-del-text)" } satisfies CSSProperties,
+  warnIcon: { color: "var(--warn)", flexShrink: 0 } satisfies CSSProperties,
   staleBanner: {
     display: "flex",
     alignItems: "center",

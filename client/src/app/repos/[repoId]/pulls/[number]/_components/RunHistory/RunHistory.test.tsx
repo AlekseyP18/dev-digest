@@ -8,9 +8,11 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { RunSummary } from "@devdigest/shared";
-import messages from "../../../../../../../../messages/en/prReview.json";
-import commonMessages from "../../../../../../../../messages/en/common.json";
 import { RunHistory } from "./RunHistory";
+import { namespace } from "@/test/intl";
+
+const messages = namespace("prReview");
+const commonMessages = namespace("common");
 
 afterEach(cleanup);
 

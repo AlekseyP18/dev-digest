@@ -1,9 +1,11 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import common from "../../../messages/en/common.json";
 import { FindingsPopover } from "./FindingsPopover";
 import { finding } from "./fixtures.test-utils";
+import { namespace } from "@/test/intl";
+
+const common = namespace("common");
 
 afterEach(cleanup);
 

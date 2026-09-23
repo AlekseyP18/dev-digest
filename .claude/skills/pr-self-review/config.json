@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "defaultBase": "main",
+  "toolSkills": ["engineering-insights", "mermaid-diagram", "pr-self-review"],
+  "exclude": [
+    "**/pnpm-lock.yaml",
+    "**/package-lock.json",
+    "server/clones/**",
+    ".claude/worktrees/**",
+    "**/.omc/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/*.{png,jpg,jpeg,gif,webp,ico,svg,pdf,woff,woff2,ttf,zip}"
+  ],
+  "repoChecksFiles": ["{client,server,reviewer-core,e2e}/**"],
+  "codeFiles":["**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"],
+  "nonWaivableRules": [
+    "hard#migration-edited",
+    "hard#secret-in-code",
+    "checks#lint",
+    "checks#typecheck",
+    "checks#test"
+  ],
+  "skills": {
+    "react-best-practices": {
+      "paths": ["client/src/**/*.tsx", "client/src/lib/hooks/**/*.ts"],
+      "content": ["\\buse[A-Z]\\w*\\s*\\("],
+      "contentIn": ["client/**"]
+    },
+    "next-best-practices": {
+      "paths": ["client/src/app/**/*.{ts,tsx}", "client/next.config.*", "client/src/i18n/**"],
+      "content": ["['\"]use (client|server)['\"]", "from ['\"]next(/[^'\"]*)?['\"]"],
+      "contentIn": ["client/**"]
+    },
+    "frontend-ui-architecture": {
+      "paths": ["client/src/**"],
+      "statuses": ["A", "R"],
+      "content": ["^\\s*import .* from ['\"](@/app/|(\\.\\./){2,})"],
+      "contentIn": ["client/src/**"]
+    },
+    "react-testing-library": {
+      "paths": ["client/**/*.test.tsx", "client/src/test/**"],
+      "content": ["@testing-library/"],
+      "contentIn": ["client/**"]
+    },
+    "onion-architecture": {
+      "paths": [
+        "server/src/modules/**/*.ts",
+        "server/src/adapters/**/*.ts",
+        "server/src/platform/**/*.ts",
+        "server/src/app.ts",
+        "server/src/vendor/shared/adapters.ts",
+        "reviewer-core/src/**/*.ts"
+      ]
+    },
+    "fastify-best-practices": {
+      "paths": [
+        "server/src/modules/**/routes.ts",
+        "server/src/modules/index.ts",
+        "server/src/modules/_shared/**",
+        "server/src/app.ts",
+        "server/src/server.ts",
+        "server/src/platform/{sse,jobs,config}.ts"
+      ],
+      "content": ["from ['\"](fastify|@fastify/[^'\"]+|fastify-[^'\"]+)['\"]"],
+      "contentIn": ["server/**"]
+    },
+    "drizzle-orm-patterns": {
+      "paths": ["server/src/modules/**/repository.ts", "server/src/db/**/*.ts"],
+      "content": ["from ['\"]drizzle-orm[^'\"]*['\"]"],
+      "contentIn": ["server/**"]
+    },
+    "postgresql-table-design": {
+      "paths": ["server/src/db/schema/**", "server/src/db/schema.ts", "server/src/db/migrations/*.sql"],
+      "statusesByPath": { "server/src/db/migrations/*.sql": ["A"] },
+      "content": ["\\bpgTable\\s*\\("],
+      "contentIn": ["server/**"]
+    },
+    "zod": {
+      "paths": ["server/src/vendor/shared/**/*.ts", "client/src/vendor/shared/**/*.ts"],
+      "content": ["from ['\"]zod['\"]"]
+    },
+    "security": {
+      "paths": [
+        "server/src/**/*.ts",
+        "reviewer-core/src/**/*.ts",
+        "client/src/lib/api.ts",
+        "client/next.config.*"
+      ],
+      "content": [
+        "process\\.env",
+        "dangerouslySetInnerHTML",
+        "\\b(eval|Function)\\s*\\(",
+        "\\bsql`",
+        "\\.raw\\s*\\(",
+        "child_process|execSync|spawn\\s*\\(",
+        "\\b(fetch|axios)\\s*\\(",
+        "innerHTML\\s*=",
+        "([Tt]oken|[Ss]ecret|[Pp]assword|[Aa]pi[_-]?[Kk]ey)"
+      ]
+    },
+    "typescript-expert": {
+      "content": [
+        ":\\s*any\\b",
+        "\\bas\\s+any\\b",
+        "as\\s+unknown\\s+as",
+        "@ts-(ignore|expect-error|nocheck)",
+        "eslint-disable"
+      ]
+    }
+  }
+}
