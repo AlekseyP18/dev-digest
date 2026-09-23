@@ -26,6 +26,7 @@ test-results/
 
 # oh-my-claudecode state (local, any depth)
 .omc/
+.claude/worktrees/
 
 # local design export
 DevDigest Design (standalone).html
